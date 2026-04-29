@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Navira - Luxury Event Booking</title>
+  <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <style>
+    * { font-family: 'Segoe UI', sans-serif; margin: 0; padding: 0; }
+    body { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; }
+    .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+    .header { background: rgba(255,255,255,0.95); padding: 20px; border-radius: 20px; margin-bottom: 20px; text-align: center; }
+    .hall-card { background: white; border-radius: 20px; padding: 20px; margin: 10px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); transition: transform 0.3s; }
+    .hall-card:hover { transform: translateY(-5px); }
+    .book-btn { background: linear-gradient(45deg, #FF6B6B, #FF8E53); color: white; border: none; padding: 15px 30px; border-radius: 50px; font-size: 16px; cursor: pointer; }
+    .dashboard { background: linear-gradient(135deg, #11998e, #38ef7d); color: white; padding: 40px; border-radius: 20px; }
+    .premium-badge { background: gold; color: black; padding: 5px 15px; border-radius: 20px; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="text/babel">
+    const { useState, useEffect } = React;
+
+    const API_URL = 'YOUR_CLOUD_RUN_URL_HERE';  // Replace with Step 5 URL
+
+    function App() {
+      const [halls, setHalls] = useState([]);
+      const [tab, setTab] = useState('customer');
+      const [bookings, setBookings] = useState([]);
+
+      useEffect(() => {
+        fetch(`${API_URL}/api/halls`).then(r => r.json()).then(setHalls);
+      }, []);
+
+      const bookHall = async (hallId) => {
+        const name = prompt('Your name:');
+        await fetch(`${API_URL}/api/book`, {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({hallId, customerName: name, date: '2026-05-15', time: '18:00'})
+        });
+        alert('Booked! Check vendor dashboard.');
+      };
+
+      return (
+        <div className="container">
+          <div className="header">
+            <h1>🪔 Navira & Wedding Places</h1>
+            <p>Luxury Event Booking + Smart Hall Management</p>
+            <button onClick={() => setTab('customer')} className={tab==='customer' ? 'premium-badge' : ''}>👥 Customer</button>
+            <button onClick={() => setTab('vendor')} className={tab==='vendor' ? 'premium-badge' : ''}>🏛️ Vendor Dashboard</button>
+          </div>
+
+          {tab === 'customer' && (
+            <div>
+              <h2>Book Luxury Venues</h2>
+              {halls.map(hall => (
+                <div key={hall.id} className="hall-card">
+                  <h3>{hall.name}</h3>
+                  <p>{hall.location} • {hall.capacity} guests • ₹{hall.price.toLocaleString()}</p>
+                  <button className="book-btn" onClick={() => bookHall(hall.id)}>Book Now ✨</button>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {tab === 'vendor' && (
+            <div className="dashboard">
+              <h2>Grand Palace Dashboard <span className="premium-badge">PREMIUM AI</span></h2>
+              <button className="book-btn" onClick={async () => {
+                const insights = await (await fetch(`${API_URL}/api/ai/finance`, {
+                  method: 'POST',
+                  headers: {'Content-Type': 'application/json'},
+                  body: JSON.stringify({
+                    userId: 'grand-palace',
+                    bookings: [{revenue: 50000}, {revenue: 35000}],
+                    expenses: {electricity: 15000, staff: 20000}
+                  })
+                })).json();
+                alert('AI Insights:\n' + (insights.insights || insights.error));
+              }}>Get AI Finance Insights</button>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    ReactDOM.render(<App />, document.getElementById('root'));
+  </script>
+</body>
+</html>
